@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+  keycloak:
+    image: bitnami/keycloak:latest
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_DATABASE_HOST: postgresql
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_USER: keycloak
+      KEYCLOAK_DATABASE_NAME: keycloak
+      KEYCLOAK_DATABASE_PASSWORD: password
+    ports:
+      - "8081:8081"
+    networks:
+      - backend-network
+    depends_on:
+      - postgresql
+
+  postgresql:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: keycloak
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
