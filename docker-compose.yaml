@@ -4,13 +4,17 @@ services:
   keycloak:
     image: bitnami/keycloak:latest
     environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_CREATE_ADMIN_USER: "true"
       KEYCLOAK_DATABASE_HOST: postgresql
       KEYCLOAK_DATABASE_PORT: 5432
       KEYCLOAK_DATABASE_USER: keycloak
       KEYCLOAK_DATABASE_NAME: keycloak
       KEYCLOAK_DATABASE_PASSWORD: password
+      
+      # Add environment variable to enable logging of generated password
+      # KEYCLOAK_LOGLEVEL: DEBUG  # Set log level to DEBUG
+
+      # KEYCLOAK_ADMIN_EVENTS_ENABLED: "true"  # Enable admin events
     ports:
       - "8081:8080"
     networks:
