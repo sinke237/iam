@@ -11,16 +11,38 @@ services:
       KEYCLOAK_DATABASE_NAME: keycloak
       KEYCLOAK_DATABASE_PASSWORD: password
       
-      # Add environment variable to enable logging of generated password
-      # KEYCLOAK_LOGLEVEL: DEBUG  # Set log level to DEBUG
+      # Example of setting up Keycloak to use LocalStack's AWS services
+      KEYCLOAK_USER_STORAGE_PROVIDER: jpa
+      KEYCLOAK_JPA_URL: jdbc:postgresql://postgresql:5432/keycloak
+      KEYCLOAK_JPA_DRIVER: org.postgresql.Driver
+      KEYCLOAK_JPA_USER: keycloak
+      KEYCLOAK_JPA_PASSWORD: password
+      KEYCLOAK_JPA_SETUP_DB_ON_STARTUP: "true"
+      KEYCLOAK_JPA_DDL: UPDATE
+      
+      # Keycloak configuration for AWS services (example using LocalStack)
+      KEYCLOAK_AWS_REGION: us-east-1
+      KEYCLOAK_AWS_ACCESS_KEY: dummy-access-key
+      KEYCLOAK_AWS_SECRET_KEY: dummy-secret-key
+      KEYCLOAK_AWS_S3_ENDPOINT: http://localstack:4566
+      KEYCLOAK_AWS_S3_PATH_STYLE_ACCESS: "true"  # Required for LocalStack S3 emulation
+      
+      # SMTP settings for Keycloak to send emails via MailHog
+      KEYCLOAK_EMAIL_TLS: "false"  # Disable TLS for local testing
+      KEYCLOAK_EMAIL_HOST: mailhog
+      KEYCLOAK_EMAIL_PORT: 1025  # MailHog SMTP port
+      KEYCLOAK_EMAIL_USERNAME: testuser  # Dummy username
+      KEYCLOAK_EMAIL_PASSWORD: testpassword  # Dummy password
+      KEYCLOAK_EMAIL_FROM: keycloak@example.com  # Sender email address
 
-      # KEYCLOAK_ADMIN_EVENTS_ENABLED: "true"  # Enable admin events
     ports:
       - "8081:8080"
     networks:
       - backend-network
     depends_on:
       - postgresql
+      - localstack
+      - mailhog
 
   postgresql:
     image: postgres:latest
@@ -30,6 +52,23 @@ services:
       POSTGRES_DB: keycloak
     ports:
       - "5432:5432"
+    networks:
+      - backend-network
+
+  localstack:
+    image: localstack/localstack
+    environment:
+      - SERVICES=s3,iam  # Include other AWS services as needed (S3, IAM, etc.)
+    ports:
+      - "4566:4566"  # LocalStack container's port for AWS services
+    networks:
+      - backend-network
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"  # MailHog web UI port
+      - "1025:1025"  # MailHog SMTP port
     networks:
       - backend-network
 
