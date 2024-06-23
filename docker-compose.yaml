@@ -5,8 +5,8 @@ services:
     image: bitnami/keycloak:latest
     environment:
       KEYCLOAK_CREATE_ADMIN_USER: "true"
-      KEYCLOAK_DATABASE_HOST: postgresql
-      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_HOST: localhost  # Update to point to your LocalStack service
+      KEYCLOAK_DATABASE_PORT: 5432      # Update port if necessary
       KEYCLOAK_DATABASE_USER: keycloak
       KEYCLOAK_DATABASE_NAME: keycloak
       KEYCLOAK_DATABASE_PASSWORD: password
@@ -16,14 +16,12 @@ services:
       KEYCLOAK_EMAIL_USERNAME: testuser
       KEYCLOAK_EMAIL_PASSWORD: testpassword
       KEYCLOAK_EMAIL_FROM: keycloak@example.com
-
     ports:
       - "8081:8080"
     networks:
       - backend-network
     depends_on:
       - postgresql
-      - localstack
       - mailhog
 
   postgresql:
@@ -37,25 +35,6 @@ services:
     networks:
       - backend-network
 
-  localstack:
-    image: localstack/localstack
-    environment:
-      - SERVICES=s3,iam
-      - DEBUG=1
-    ports:
-      - "4566:4566"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - backend-network
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '2'
-    #       memory: '4G'
-
-
-
   mailhog:
     image: mailhog/mailhog
     ports:
@@ -66,4 +45,3 @@ services:
 
 networks:
   backend-network:
-    driver: bridge
