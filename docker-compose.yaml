@@ -15,16 +15,28 @@ services:
       KEYCLOAK_EMAIL_PORT: 1025
       KEYCLOAK_EMAIL_USERNAME: testuser
       KEYCLOAK_EMAIL_PASSWORD: testpassword
-      KEYCLOAK_EMAIL_FROM: keycloak@example.com
-
+      KEYCLOAK_EMAIL_FROM: enowsinke@gmail.com
+      KEYCLOAK_HTTPS_PORT: "8443"  # Specify the HTTPS port
+      KEYCLOAK_HTTPS_KEYSTORE: /certs/keycloak.jks
+      KEYCLOAK_HTTPS_KEYSTORE_PASSWORD: password
+      KEYCLOAK_HTTPS_KEY_PASSWORD: password
     ports:
       - "8081:8080"
+      - "8443:8443"  # Map the HTTPS port
     networks:
       - backend-network
     depends_on:
       - postgresql
       - localstack
       - mailhog
+    volumes:
+      - ./keycloak.crt:/certs/keycloak.crt
+      - ./keycloak.key:/certs/keycloak.key
+  # # Include other services as per your existing configuration
+  # networks:
+  #   backend-network:
+  #     driver: bridge
+
 
   postgresql:
     image: postgres:latest

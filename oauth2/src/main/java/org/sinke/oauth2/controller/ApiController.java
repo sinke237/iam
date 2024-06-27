@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ApiController {
 
-    @GetMapping("/api/resource")
-    public String getResource() {
-        return "This is a protected resource";
+    @GetMapping("/sinke-resources")
+    public String getSinkeResources() {
+        return "This is a protected resource. Only authenticated users can access this.";
     }
 }
