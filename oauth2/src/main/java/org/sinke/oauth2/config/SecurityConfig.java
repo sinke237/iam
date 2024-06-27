@@ -1,24 +1,29 @@
 package org.sinke.oauth2.config;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.InMemoryReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 @Configuration
-@EnableReactiveMethodSecurity
+@EnableWebFluxSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        return http
+        http
             .authorizeExchange(exchanges ->
                 exchanges
                     .pathMatchers("/", "/home").permitAll()
@@ -27,25 +32,49 @@ public class SecurityConfig {
             )
             .oauth2Login(oauth2Login ->
                 oauth2Login
-                    .loginPage("/login") // Specify the custom login page URL
-                    .defaultSuccessUrl("/sinke-resources", true)
-                    .authenticationFailureHandler((exchange, exception) -> {
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return exchange.getResponse().setComplete();
-                    })
-            )
-            .build();
+                    .authenticationSuccessHandler((webFilterExchange, authentication) ->
+                        Mono.fromRunnable(() ->
+                            webFilterExchange.getExchange().getResponse()
+                                .getHeaders().setLocation(URI.create("/sinke-resources"))
+                        ).then()
+                    )
+                    .authenticationFailureHandler((webFilterExchange, exception) ->
+                        Mono.fromRunnable(() ->
+                            webFilterExchange.getExchange().getResponse()
+                                .getHeaders().setLocation(URI.create("/failed-auth"))
+                        ).then()
+                    )
+            );
+            
+        return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user =
-             User.withDefaultPasswordEncoder()
-                .username("user")
-                .password("password")
-                .roles("USER")
-                .build();
+    public ReactiveClientRegistrationRepository reactiveClientRegistrationRepository() {
+        // Configure Keycloak Client Registration
+        ClientRegistration registration = ClientRegistration.withRegistrationId("keycloak")
+            .clientId("${KEYCLOAK_CLIENT_ID}")
+            .clientSecret("${KEYCLOAK_CLIENT_SECRET}")
+            .clientName("Keycloak")
+            .scope("openid", "profile", "email")
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+            .authorizationUri("${KEYCLOAK_AUTH_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth")
+            .tokenUri("${KEYCLOAK_AUTH_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token")
+            .userInfoUri("${KEYCLOAK_AUTH_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo")
+            .jwkSetUri("${KEYCLOAK_AUTH_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs")
+            .build();
 
-        return new InMemoryUserDetailsManager(user);
+        return new InMemoryReactiveClientRegistrationRepository(registration);
+    }
+
+    @Bean
+    public ServerOAuth2AuthorizedClientRepository authorizedClientRepository() {
+        return new WebSessionServerOAuth2AuthorizedClientRepository();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

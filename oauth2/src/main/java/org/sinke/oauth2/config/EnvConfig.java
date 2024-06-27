@@ -3,14 +3,15 @@ package org.sinke.oauth2.config;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.PostConstruct;
-
 @Configuration
 public class EnvConfig {
 
-    @PostConstruct
+    @jakarta.annotation.PostConstruct
     public void init() {
-        Dotenv dotenv = Dotenv.configure().load();
+        
+        // Load .env file
+        Dotenv dotenv = Dotenv.configure().directory("/Users/studac/sinke/iam/oauth2/.env").load();
+
         String authServerUrl = dotenv.get("KEYCLOAK_AUTH_SERVER_URL");
         String realm = dotenv.get("KEYCLOAK_REALM");
         String clientId = dotenv.get("KEYCLOAK_CLIENT_ID");

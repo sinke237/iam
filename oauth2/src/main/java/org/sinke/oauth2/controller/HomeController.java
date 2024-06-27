@@ -10,13 +10,13 @@ public class HomeController {
 
     @GetMapping("/")
     public ResponseEntity<String> home() {
-        // return JSON response to React app
+        // Return JSON response to indicate home page
         return ResponseEntity.ok("{\"message\": \"Welcome to the home page. Please login.\"}");
     }
 
     @GetMapping("/failed-auth")
     public ResponseEntity<String> failedAuth() {
-        // return JSON response to React app
+        // Return JSON response to indicate authentication failure
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\": \"Authentication failed.\"}");
     }
 }
